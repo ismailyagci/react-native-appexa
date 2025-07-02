@@ -1,68 +1,110 @@
-### `appexa` Paketinde Validation Modülünün Kullanımı
+# Using the Validation Module
 
-`appexa`'nın `validation` modülü, form verileri ve diğer girdilerin doğrulanması için çeşitli fonksiyonlar sunar. Bu modül, kullanıcı girdilerinin beklenen kriterlere uygun olup olmadığını kontrol etmeyi sağlar.
+The `validation` module in `react-native-appexa` provides a set of functions to validate form data and other inputs. This module helps ensure that user input meets the expected criteria before being processed or sent to an API.
 
-#### Temel Kullanım
+#### Basic Usage
 
-`validation` modülü, belirli alanlar için doğrulama kurallarını tanımlamanıza ve bu kurallara göre girdileri doğrulamanıza olanak tanır.
+The `validation` module allows you to define validation rules for specific fields and then validate input against those rules.
 
-Örnek kullanım:
+Here is an example of a simple login form in React Native:
 
 ```javascript
-import { validation } from "react-appexa";
+import React, { useState } from 'react';
+import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { validation } from 'react-native-appexa';
 
-const validationResponse = validation({
-  mail: {
-    fieldTitle: "Mail",
-    type: "email"
-  },
-  password: {
-    fieldTitle: "Password",
-    type: "password"
-  }
-}, { mail, password });
+const LoginScreen = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    const validationSchema = {
+      email: {
+        fieldTitle: 'Email',
+        type: 'email',
+      },
+      password: {
+        fieldTitle: 'Password',
+        type: 'password', // This checks for a minimum length (default 4)
+        typeOptions: { min: 6 } // Override default min length
+      }
+    };
+
+    const validationResponse = validation(validationSchema, { email, password });
+
+    if (!validationResponse.status) {
+      Alert.alert('Validation Error', validationResponse.message);
+      return;
+    }
+
+    // If validation passes, proceed with login logic
+    Alert.alert('Success', 'Login data is valid!');
+    // dispatch(authModule.login(email, password));
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Button title="Login" onPress={handleLogin} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', padding: 20 },
+  input: { height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, padding: 10 }
+});
+
+export default LoginScreen;
 ```
 
-Bu örnekte, `mail` ve `password` alanları için doğrulama kuralları tanımlanmış ve bu kurallar kullanıcı girdilerine uygulanmıştır.
+### Validation Rules
 
-#### Password Doğrulama
+Below are the available validation types and their configurations.
 
-Şifre alanlarının belirli kriterlere uygun olup olmadığını kontrol eder:
-
+#### `required`
+Checks if a field is not `undefined`.
 ```javascript
-password: {
-  fieldTitle: "Password",
-  type: "password",
-  options: { minLength: 5 }
+fullName: {
+  fieldTitle: "Full Name",
+  type: "required"
 }
 ```
 
-#### String Doğrulama
-
-Metin alanlarının string tipinde olup olmadığını kontrol eder:
-
+#### `string`
+Checks if the value is a string.
 ```javascript
-string: {
+username: {
   fieldTitle: "Username",
   type: "string"
 }
 ```
 
-#### Number Doğrulama
-
-Sayısal alanların number tipinde olup olmadığını kontrol eder:
-
+#### `number`
+Checks if the value is a number.
 ```javascript
-number: {
+age: {
   fieldTitle: "Age",
   type: "number"
 }
 ```
 
-#### Email Doğrulama
-
-Email alanlarının geçerli bir email formatında olup olmadığını kontrol eder:
-
+#### `email`
+Checks if the value is in a valid email format.
 ```javascript
 email: {
   fieldTitle: "Email",
@@ -70,70 +112,59 @@ email: {
 }
 ```
 
-#### Length Doğrulama
-
-Metin veya diğer alanların belirli bir uzunluk aralığında olup olmadığını kontrol eder:
-
+#### `password`
+Checks for a minimum string length. The default is 4.
 ```javascript
-length: {
+password: {
+  fieldTitle: "Password",
+  type: "password",
+  typeOptions: { min: 8 } // Optional: override default
+}
+```
+
+#### `length`
+Checks if the value's length is within a given range.
+```javascript
+username: {
   fieldTitle: "Username",
   type: "length",
-  options: { min: 3, max: 10 }
+  typeOptions: { min: 3, max: 10 }
 }
 ```
 
-#### Required Doğrulama
-
-Bir alanın boş olup olmadığını kontrol eder:
-
+#### `array`
+Checks if the value is an array.
 ```javascript
-required: {
-  fieldTitle: "Full Name",
-  type: "required"
-}
-```
-
-#### Array Doğrulama
-
-Bir alanın dizi tipinde olup olmadığını ve belirli kriterleri karşılayıp karşılamadığını kontrol eder:
-
-```javascript
-array: {
+tags: {
   fieldTitle: "Tags",
   type: "array"
 }
 ```
 
-#### NestedSlug Doğrulama
-
-Özelleştirilmiş slug formatının doğruluğunu kontrol eder:
-
+#### `oneOf`
+Checks if the value is one of the specified values in an array.
 ```javascript
-nestedSlug: {
-  fieldTitle: "Category Slug",
-  type: "nestedSlug"
-}
-```
-
-#### OneOf Doğrulama
-
-Bir alanın belirli değerlerden birine sahip olup olmadığını kontrol eder:
-
-```javascript
-oneOf: {
+role: {
   fieldTitle: "Role",
   type: "oneOf",
-  options: ["admin", "user", "guest"]
+  typeOptions: ["admin", "user", "guest"] // The options are the array itself
 }
 ```
 
-#### IsObject Doğrulama
-
-Bir alanın obje tipinde olup olmadığını kontrol eder:
-
+#### `isObject`
+Checks if the value is a plain object.
 ```javascript
-isObject: {
+userDetails: {
   fieldTitle: "User Details",
   type: "isObject"
+}
+```
+
+#### `slug` & `nestedSlug`
+Checks for specific URL-friendly slug formats.
+```javascript
+categorySlug: {
+  fieldTitle: "Category Slug",
+  type: "slug" // or "nestedSlug"
 }
 ```
